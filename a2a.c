@@ -118,6 +118,65 @@ int pFindMax(float data[], int n, float *gMax, int nthreads){
 	//
 	//  destroy mutex
 	// 
+
+	pthread_t threads[nthreads];
+
+	*gMax = data[0];
+
+	pthread_mutex_t lock; 
+
+	if (pthread_mutex_init(&lock, NULL) != 0)
+	{
+		printf("%s\n", "Mutex init has failed");
+		return 1;
+	}
+
+	int indexperThread = ceil((double)n/nthreads);
+	// printf("IndexPerThread:%d\n", indexperThread);
+
+	int indexAssigned = 0;
+	int start = 0;
+	int threadUsed = 0;
+	int rc;
+
+	for (int i = 0; i < nthreads; i++) {
+		if (indexAssigned < n){
+			arguments *arg = malloc(sizeof(arguments));
+			arg->data = data;
+			arg->lockptr = &lock;
+			arg->gMax = gMax;
+			arg->si = start;
+			arg->ei = start + indexperThread -1;
+
+			indexAssigned += indexperThread;
+			// printf("Start Id %d\n", arg->si);
+			// printf("End Id %d\n", arg->ei);
+
+			if (indexAssigned > n) {
+				arg->ei = n - 1;
+				indexAssigned = n;
+			}
+
+			start += indexperThread;
+			threadUsed += 1;
+
+			rc = pthread_create(threads+i, NULL, doWork, arg);
+
+			if (rc){
+				fprintf(stderr, "Error joining thread %d and return code is %d\n", i, rc);
+				exit(-1);
+			}
+
+		}
+		
+	}
+
+	for (int t = 0; t < threadUsed; t++) {
+			pthread_join(threads[t], NULL);
+	}
+	// printf("Joining done\n");
+
+	pthread_mutex_destroy(&lock);
     
     return EXIT_SUCCESS;
 }
@@ -140,6 +199,32 @@ void *doWork(void *a){
 	// lock the mutex
 	// update gMax if appropriate
 	// unlock the mutex
+
+	// printf("In doWork\n");
+    arguments* arg;
+    arg = (arguments *) a;
+
+    int si = arg->si;
+    int ei = arg->ei;
+    float *currMax = arg->gMax;
+    float *arr = arg->data;
+
+    pthread_mutex_t *lckptr = arg->lockptr;
+
+    free(arg);
+
+
+
+    pthread_mutex_lock(lckptr);
+
+//    float *currMax = arg->gMax;
+    // printf("Current max is %f\n", *currMax);
+    for(int i=si; i<=ei; i++){
+
+        *currMax = (arr[i] > *currMax) ? arr[i] : *currMax;
+    }
+
+    pthread_mutex_unlock(lckptr);
 
 
     return NULL;
