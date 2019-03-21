@@ -188,44 +188,54 @@ int pFindMax(float data[], int n, float *gMax, int nthreads){
  *  @param a a pointer to an arguments struct.
  *  @returns NULL
  */
-void *doWork(void *a){
+ void *doWork(void *a){
 
 
-	//TODO: The thread function
-	// Unpack the arguments struct into local variables.
-	// free the arguments struct
-	//
-	// find the max value for a portion of the array,
-	// lock the mutex
-	// update gMax if appropriate
-	// unlock the mutex
+     //TODO: The thread function
+     // Unpack the arguments struct into local variables.
+     // free the arguments struct
+     //
+     // find the max value for a portion of the array,
+     // lock the mutex
+     // update gMax if appropriate
+     // unlock the mutex
 
-	// printf("In doWork\n");
-    arguments* arg;
-    arg = (arguments *) a;
+     // printf("In doWork\n");
+     arguments *arg= malloc(sizeof(arguments));
+     arg = (arguments *) a;
 
-    int si = arg->si;
-    int ei = arg->ei;
-    float *currMax = arg->gMax;
-    float *arr = arg->data;
+     int si = arg->si;
+     int ei = arg->ei;
+     float *currMax = arg->gMax;
+     float *arr = arg->data;
 
-    pthread_mutex_t *lckptr = arg->lockptr;
+     float cMax = *currMax;
 
-    free(arg);
+     // printf("Current Maximum is %f\n", cMax);
+
+     pthread_mutex_t *lckptr = arg->lockptr;
+
+ //    free(arg);
+
+     for(int i=si; i<=ei; i++){
+
+         cMax = (arr[i] > cMax) ? arr[i] : cMax;
+     }
+
+     pthread_mutex_lock(lckptr);
+
+     // printf("After loo[ Current Maximum is %f\n", cMax);
+
+ //    float *currMax = arg->gMax;
+     // printf("Current max is %f\n", *currMax);
+     if (*currMax < cMax) {
+         *currMax = cMax;
+     }
+
+     // printf("After update in currMax %f, value of currMax:%p and address of gMax:%p\n", *currMax, (void*)currMax, (void*)arg->gMax);
+
+     pthread_mutex_unlock(lckptr);
 
 
-
-    pthread_mutex_lock(lckptr);
-
-//    float *currMax = arg->gMax;
-    // printf("Current max is %f\n", *currMax);
-    for(int i=si; i<=ei; i++){
-
-        *currMax = (arr[i] > *currMax) ? arr[i] : *currMax;
-    }
-
-    pthread_mutex_unlock(lckptr);
-
-
-    return NULL;
-}
+     return NULL;
+ }

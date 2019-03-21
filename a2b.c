@@ -101,13 +101,13 @@ int oneRound(){
      // do the same thing you did for thread_func0(), but in a way
      // that could (sometimes) lead to deadlock.
 
-     pthread_mutex_lock(&(mutices[0]));
      pthread_mutex_lock(&(mutices[1]));
+     pthread_mutex_lock(&(mutices[0]));
 
      printf("Philosopher 1 is eating.\n");
 
-     pthread_mutex_lock(&(mutices[0]));
-     pthread_mutex_lock(&(mutices[1]));
+     pthread_mutex_unlock(&(mutices[1]));
+     pthread_mutex_unlock(&(mutices[0]));
 
 
      return NULL;
